@@ -1,0 +1,70 @@
+# Deploy Workflow
+# Pulls the latest Docker image from GHCR and runs it on your local machine.
+# Requires a self-hosted runner to be registered on your PC.
+# Setup: GitHub repo → Settings → Actions → Runners → New self-hosted runner
+
+name: Deploy — Local
+
+on:
+  workflow_run:
+    workflows: ["Docker — Build & Push"]   # Triggers after Docker workflow finishes
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:                        # Allow manual trigger from GitHub UI
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  CONTAINER_NAME: cicd-practice-app        # Name for the running container
+  APP_PORT: 3000                           # Port your app listens on
+
+jobs:
+  deploy:
+    name: Deploy to Local Machine
+    runs-on: self-hosted                   # Runs on YOUR PC, not GitHub's servers
+
+    # Only deploy if the Docker workflow succeeded (skip if it failed)
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      # 1. Log in to GHCR so we can pull the private image
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # 2. Pull the latest image built by the Docker workflow
+      - name: Pull latest image
+        run: |
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      # 3. Stop and remove the old container if it's already running
+      - name: Stop existing container
+        run: |
+          docker stop ${{ env.CONTAINER_NAME }} 2>$null || true
+          docker rm ${{ env.CONTAINER_NAME }} 2>$null || true
+
+      # 4. Run the new container
+      - name: Run new container
+        run: |
+          docker run -d `
+            --name ${{ env.CONTAINER_NAME }} `
+            --restart unless-stopped `
+            -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} `
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      # 5. Verify the container started successfully
+      - name: Verify container is running
+        run: |
+          Start-Sleep -Seconds 3
+          $status = docker inspect -f '{{.State.Status}}' ${{ env.CONTAINER_NAME }}
+          if ($status -ne "running") {
+            Write-Error "Container failed to start. Status: $status"
+            docker logs ${{ env.CONTAINER_NAME }}
+            exit 1
+          }
+          Write-Host "✅ Container is running! App available at http://localhost:${{ env.APP_PORT }}"
+
+      # 6. Clean up old unused images to save disk space
+      - name: Clean up old images
+        run: |
+          docker image prune -f

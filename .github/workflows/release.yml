@@ -57,7 +57,7 @@ jobs:
           git add package.json
           git commit -m "chore: bump version to v$NEW_VERSION [skip ci]"
           git tag "v$NEW_VERSION"
-          git push origin main --tags
+          git push https://x-access-token:${{ secrets.CR_PAT }}@github.com/${{ github.repository }}.git main --tags
 
       # 5. Generate a simple changelog from recent commits
       - name: Generate Changelog

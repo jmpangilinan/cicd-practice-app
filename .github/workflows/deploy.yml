@@ -27,11 +27,15 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
+      - name: Debug PAT availability
+        run: |
+          if ("${{ secrets.CR_PAT }}" -eq "") { Write-Host "CR_PAT is EMPTY!" } else { Write-Host "CR_PAT is set." }
+
       # 1. Log in to GHCR using a Personal Access Token (CR_PAT)
       # The default GITHUB_TOKEN sometimes lacks permissions on 'workflow_run' events
       - name: Log in to GHCR
         run: |
-          echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker login ghcr.io -u ${{ github.actor }} --password "${{ secrets.CR_PAT }}"
 
       # 2. Pull the latest image built by the Docker workflow
       - name: Pull latest image

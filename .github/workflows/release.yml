@@ -54,10 +54,8 @@ jobs:
           npm version $RELEASE_TYPE --no-git-tag-version
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "new_version=v$NEW_VERSION" >> $GITHUB_OUTPUT
-          git add package.json
-          git commit -m "chore: bump version to v$NEW_VERSION [skip ci]"
           git tag "v$NEW_VERSION"
-          git push https://x-access-token:${{ secrets.CR_PAT }}@github.com/${{ github.repository }}.git main --tags
+          git push https://x-access-token:${{ secrets.CR_PAT }}@github.com/${{ github.repository }}.git refs/tags/v$NEW_VERSION
 
       # 5. Generate a simple changelog from recent commits
       - name: Generate Changelog

@@ -5,9 +5,9 @@ name: CI — Lint & Test
 
 on:
   push:
-    branches: ["**"]        # Every branch push
+    branches: [main]        # Only run on pushes directly to main
   pull_request:
-    branches: [main, dev]   # PRs targeting main or dev
+    branches: [main, dev]   # Also run on PRs targeting main or dev
 
 jobs:
   lint-and-test:

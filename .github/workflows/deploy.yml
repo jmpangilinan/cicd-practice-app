@@ -27,10 +27,11 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
-      # 1. Log in to GHCR so we can pull the private image
+      # 1. Log in to GHCR using a Personal Access Token (CR_PAT)
+      # The default GITHUB_TOKEN sometimes lacks permissions on 'workflow_run' events
       - name: Log in to GHCR
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       # 2. Pull the latest image built by the Docker workflow
       - name: Pull latest image

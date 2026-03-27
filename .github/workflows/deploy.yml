@@ -45,8 +45,8 @@ jobs:
       # 3. Stop and remove the old container if it's already running
       - name: Stop existing container
         run: |
-          docker stop ${{ env.CONTAINER_NAME }} 2>$null || true
-          docker rm ${{ env.CONTAINER_NAME }} 2>$null || true
+          docker stop ${{ env.CONTAINER_NAME }} 2>$null; if ($?) {} else { $true }
+          docker rm ${{ env.CONTAINER_NAME }} 2>$null; if ($?) {} else { $true }
 
       # 4. Run the new container
       - name: Run new container

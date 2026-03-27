@@ -39,15 +39,32 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-      # 5. Run tests with coverage
+      # 5. Run unit & integration tests with coverage
       - name: Run tests
         run: npm test
 
-      # 6. Upload coverage report as artifact (viewable in GitHub UI)
+      # 6. Install Playwright browser dependencies
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      # 7. Run E2E tests
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      # 8. Upload coverage report as artifact (viewable in GitHub UI)
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         if: always()             # Upload even if tests fail
         with:
           name: coverage-report-node-${{ matrix.node-version }}
           path: coverage/
+          retention-days: 7
+
+      # 9. Upload Playwright report as artifact
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-node-${{ matrix.node-version }}
+          path: playwright-report/
           retention-days: 7

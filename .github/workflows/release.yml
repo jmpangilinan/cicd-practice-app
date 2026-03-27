@@ -1,0 +1,87 @@
+# Release Workflow
+# Automatically creates a GitHub Release and bumps the version tag
+# when a PR is merged into `main`.
+#
+# This uses a "semantic versioning" approach triggered manually, or you can
+# integrate a tool like `semantic-release` for full automation.
+
+name: Release — Tag & Publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Release type (patch | minor | major)"
+        required: true
+        default: "patch"
+        type: choice
+        options: [patch, minor, major]
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write          # Required to create tags and releases
+
+    steps:
+      # 1. Checkout with full history (needed for versioning)
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0       # Full history for tag detection
+
+      # 2. Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      # 3. Configure git identity for the automated commit
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # 4. Bump version and create a git tag
+      - name: Bump version
+        id: bump
+        run: |
+          RELEASE_TYPE="${{ github.event.inputs.release_type || 'patch' }}"
+          npm version $RELEASE_TYPE --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "new_version=v$NEW_VERSION" >> $GITHUB_OUTPUT
+          git add package.json
+          git commit -m "chore: bump version to v$NEW_VERSION [skip ci]"
+          git tag "v$NEW_VERSION"
+          git push origin main --tags
+
+      # 5. Generate a simple changelog from recent commits
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          if [ -z "$PREVIOUS_TAG" ]; then
+            CHANGELOG=$(git log --oneline -20)
+          else
+            CHANGELOG=$(git log --oneline "$PREVIOUS_TAG..HEAD~1")
+          fi
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      # 6. Create a GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.bump.outputs.new_version }}
+          name: Release ${{ steps.bump.outputs.new_version }}
+          body: |
+            ## What's Changed
+            ${{ steps.changelog.outputs.changelog }}
+
+            **Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ steps.bump.outputs.new_version }}
+          draft: false
+          prerelease: false

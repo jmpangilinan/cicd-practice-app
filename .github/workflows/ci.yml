@@ -1,0 +1,53 @@
+# CI Workflow: Runs on every push and Pull Request
+# Lints the code and runs all tests with coverage reporting.
+
+name: CI — Lint & Test
+
+on:
+  push:
+    branches: ["**"]        # Every branch push
+  pull_request:
+    branches: [main, dev]   # PRs targeting main or dev
+
+jobs:
+  lint-and-test:
+    name: Lint & Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    # Test against multiple Node versions (matrix strategy)
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      # 1. Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up the Node.js version from the matrix
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"           # Cache node_modules for speed
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: npm ci              # `npm ci` is faster and stricter than `npm install`
+
+      # 4. Lint the source code
+      - name: Run ESLint
+        run: npm run lint
+
+      # 5. Run tests with coverage
+      - name: Run tests
+        run: npm test
+
+      # 6. Upload coverage report as artifact (viewable in GitHub UI)
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()             # Upload even if tests fail
+        with:
+          name: coverage-report-node-${{ matrix.node-version }}
+          path: coverage/
+          retention-days: 7

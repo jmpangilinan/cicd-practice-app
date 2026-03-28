@@ -35,23 +35,23 @@ function add(a, b) {
 // --- SONARCLOUD TEST ROUTE ---
 app.get('/admin', (req, res) => {
   // MAJOR VULNERABILITY: Hardcoded secrets
-  const adminPassword = "SuperSecretPassword123!";
+  const adminPassword = 'SuperSecretPassword123!';
   
   // CODE SMELL: Unused variable
   // eslint-disable-next-line no-unused-vars
-  let unusedData = "This variable is literally never used anywhere";
+  let unusedData = 'This variable is literally never used anywhere';
   
   // BUG & CODE SMELL: Redundant boolean comparison and confusing logic
   // eslint-disable-next-line no-constant-condition
   if (true === true) {
     if (adminPassword != null) {
       // eslint-disable-next-line no-console
-      console.log("Admin trying to log in...");
+      console.log('Admin trying to log in...');
     }
   }
 
   // BUG: Missing proper response headers or authentication
-  res.send("Welcome Admin! Password is: " + adminPassword);
+  res.send('Welcome Admin! Password is: ' + adminPassword);
 });
 
 if (require.main === module) {

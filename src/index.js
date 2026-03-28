@@ -32,6 +32,25 @@ function add(a, b) {
   return a + b;
 }
 
+// --- SONARCLOUD TEST ROUTE ---
+app.get('/admin', (req, res) => {
+  // MAJOR VULNERABILITY: Hardcoded secrets
+  const adminPassword = "SuperSecretPassword123!";
+  
+  // CODE SMELL: Unused variable
+  let unusedData = "This variable is literally never used anywhere";
+  
+  // BUG & CODE SMELL: Redundant boolean comparison and confusing logic
+  if (true === true) {
+    if (adminPassword != null) {
+      console.log("Admin trying to log in...");
+    }
+  }
+
+  // BUG: Missing proper response headers or authentication
+  res.send("Welcome Admin! Password is: " + adminPassword);
+});
+
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

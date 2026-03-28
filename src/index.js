@@ -38,11 +38,14 @@ app.get('/admin', (req, res) => {
   const adminPassword = "SuperSecretPassword123!";
   
   // CODE SMELL: Unused variable
+  // eslint-disable-next-line no-unused-vars
   let unusedData = "This variable is literally never used anywhere";
   
   // BUG & CODE SMELL: Redundant boolean comparison and confusing logic
+  // eslint-disable-next-line no-constant-condition
   if (true === true) {
     if (adminPassword != null) {
+      // eslint-disable-next-line no-console
       console.log("Admin trying to log in...");
     }
   }

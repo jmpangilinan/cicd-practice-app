@@ -68,3 +68,11 @@ describe('GET /add/:a/:b', () => {
     expect(res.body.error).toBeDefined();
   });
 });
+
+describe('GET /admin', () => {
+  it('returns 200 and hits SonarCloud test payload', async () => {
+    const res = await request(app).get('/admin');
+    expect(res.statusCode).toBe(200);
+    expect(res.text).toContain('Welcome Admin!');
+  });
+});
